@@ -1,27 +1,33 @@
-import { PlaywrightTestConfig } from '@playwright/test';
-import { testConfig } from './config/analyzer.config';
+import { defineConfig, devices } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
-  testDir: './tests/generated',
-  timeout: testConfig.timeout,
-  retries: testConfig.retries,
-  workers: testConfig.parallel ? undefined : 1,
+export default defineConfig({
+  testDir: './tests',
+  timeout: 30000,
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [
+    ['html'],
+    ['list'],
+    ['json', { outputFile: 'test-results/test-results.json' }]
+  ],
   use: {
-    baseURL: testConfig.baseUrl,
+    baseURL: 'https://github.com/',
+    trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: 'retain-on-failure',
+    video: process.env.NODE_ENV === 'development' ? 'on' : 'off',
   },
   projects: [
     {
-      name: testConfig.browser,
-      use: { browserName: testConfig.browser },
+      name: 'chromium',
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Show browser in development
+        headless: process.env.NODE_ENV !== 'development'
+      },
     },
   ],
-  reporter: [
-    ['html'],
-    ['list']
-  ],
-};
-
-export default config; 
+  // Create artifacts directory
+  outputDir: 'test-artifacts',
+}); 

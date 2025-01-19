@@ -12,24 +12,30 @@ async function main() {
       throw new Error('Analysis results not found. Please run npm run analyze first.');
     }
 
+    console.log('Reading analysis results from:', analysisPath);
     const analysisResults = JSON.parse(fs.readFileSync(analysisPath, 'utf-8'));
+    console.log(`Found ${Object.keys(analysisResults.elements).length} elements to test`);
+
     const elementsMap = new Map<string, ElementMetadata>(
       Object.entries(analysisResults.elements)
     );
 
     // Generate test cases
-    console.log('Generating test cases...');
+    console.log('\nGenerating test cases...');
     const testGenerator = new TestCaseGenerator(elementsMap);
     const testCases = testGenerator.generateTestSuite();
+    console.log(`Generated ${testCases.length} test cases`);
     
     // Generate test code
-    console.log('Generating test code...');
+    console.log('\nGenerating test code...');
     const codeGenerator = new TestCodeGenerator(testCases);
     const testFiles = codeGenerator.generateTestFiles();
+    console.log(`Generated ${testFiles.size} test files`);
 
     // Save generated tests
     const testsDir = path.join(process.cwd(), 'tests', 'generated');
     if (!fs.existsSync(testsDir)) {
+      console.log('Creating tests directory:', testsDir);
       fs.mkdirSync(testsDir, { recursive: true });
     }
 
@@ -44,6 +50,7 @@ async function main() {
     console.log(`Location: ${testsDir}`);
   } catch (error: any) {
     console.error('Error during test generation:', error.message);
+    console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 }
